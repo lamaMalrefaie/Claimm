@@ -138,7 +138,7 @@
                 document.getElementById('outputBox').innerText = '';
                 return;
             }
-            processGeneralValues(prettyJson);
+            processExtensions(prettyJson);
         }
 
         function clearContent() {
@@ -147,57 +147,60 @@
             document.getElementById('outputBox').innerText = '';
         }
 
-        function processGeneralValues(prettyJsonText) {
-            var generalResults = '';
-            
-            // Patterns for each type of value
-            var netValuePattern = /"net":\s*{\s*"value":\s*([\d.]+)/gi;
-            var extensionTaxPattern = /"url":\s*"[^"]*extension-tax"[\s\S]*?"valueMoney":\s*{\s*"value":\s*([\d.]+)/gi;
-            var patientSharePattern = /"patientShare":\s*{\s*"value":\s*([\d.]+)/gi;
+        function processExtensions(prettyJsonText) {
+            var extensionPattern = /"extension":\s*{[^\}]+}/gi;
+            var extensionMatches = prettyJsonText.match(extensionPattern);
+            var outputResults = '';
 
-            // Function to process matches
-            function extractMatches(pattern, label) {
-                let match;
-                let count = 1;
-                while ((match = pattern.exec(prettyJsonText)) !== null) {
-                    generalResults += label + ' ' + count + ': ' + copyButton(match[1]) + '<br>';
-                    count++;
+            if (extensionMatches) {
+                for (var i = 0; i < extensionMatches.length; i++) {
+                    outputResults += '<br>Extension ' + (i + 1) + ':<br>';
+                    
+                    var netValuePattern = /"net":\s*{\s*"value":\s*([\d.]+)/i;
+                    var extensionTaxPattern = /"url":\s*"[^"]*extension-tax"[\s\S]*?"valueMoney":\s*{\s*"value":\s*([\d.]+)/i;
+                    var patientInvoicePattern = /"patientInvoice":\s*{\s*"value":\s*([\d.]+)/i;
+                    var patientSharePattern = /"patientShare":\s*{\s*"value":\s*([\d.]+)/i;
+
+                    var netValueMatch = extensionMatches[i].match(netValuePattern);
+                    var extensionTaxMatch = extensionMatches[i].match(extensionTaxPattern);
+                    var patientInvoiceMatch = extensionMatches[i].match(patientInvoicePattern);
+                    var patientShareMatch = extensionMatches[i].match(patientSharePattern);
+
+                    outputResults += 'Net Value: ' + (netValueMatch ? copyButton(netValueMatch[1]) : 'Not found') + '<br>';
+                    outputResults += 'Extension Tax: ' + (extensionTaxMatch ? copyButton(extensionTaxMatch[1]) : 'Not found') + '<br>';
+                    outputResults += 'Patient Invoice: ' + (patientInvoiceMatch ? copyButton(patientInvoiceMatch[1]) : 'Not found') + '<br>';
+                    outputResults += 'Patient Share: ' + (patientShareMatch ? copyButton(patientShareMatch[1]) : 'Not found') + '<br>';
+
+                    // Process each product/service within the extension
+                    processProductOrService(extensionMatches[i], outputResults);
                 }
-                if (count === 1) {
-                    generalResults += label + ': Not found<br>';
-                }
+            } else {
+                outputResults = 'No extensions found in the JSON.';
             }
 
-            // Extract multiple values for each pattern
-            extractMatches(netValuePattern, 'Net Value');
-            extractMatches(extensionTaxPattern, 'Extension Tax');
-            extractMatches(patientSharePattern, 'Patient Share');
-
-            // Output the results and call the next function
-            document.getElementById('outputBox').innerHTML = generalResults;
-            processProductOrService(prettyJsonText, generalResults);
+            document.getElementById('outputBox').innerHTML = outputResults;
         }
 
-        function processProductOrService(prettyJsonText, previousResults) {
+        function processProductOrService(extensionText, previousResults) {
             var servicePattern = '"productOrService":\\s*{[\\s\\S]+?},[\\s\\S]*?"quantity":\\s*{\\s*"value":\\s*(\\d+)';
             var serviceResults = '';
-            var serviceMatches = prettyJsonText.match(new RegExp(servicePattern, 'gi'));
-        
+            var serviceMatches = extensionText.match(new RegExp(servicePattern, 'gi'));
+
             if (serviceMatches) {
                 for (var i = 0; i < serviceMatches.length; i++) {
-                    var currentMatch = serviceMatches[i];
+                    serviceResults += '<br>Product/Service ' + (i + 1) + ':<br>';
+                    
                     var displayPattern = '"display":\\s*"([^"]+)"';
                     var NphiesPattern = '"coding":\\s*\\[\\s*{[\\s\\S]+?"system":\\s*"([^"]+)",\\s*"code":\\s*"([^"]+)"';
                     var ServicePattern = '"coding":\\s*\\[\\s*{[\\s\\S]+?},\\s*{[\\s\\S]+?"system":\\s*"([^"]+)",\\s*"code":\\s*"([^"]+)"';
                     var unitPricePattern = '"unitPrice":\\s*{\\s*"value":\\s*([\\d.]+)';
-        
-                    var displayMatch = currentMatch.match(new RegExp(displayPattern, 'i'));
-                    var NphiesMatch = currentMatch.match(new RegExp(NphiesPattern, 'i'));
-                    var ServiceMatch = currentMatch.match(new RegExp(ServicePattern, 'i'));
-                    var unitPriceMatch = currentMatch.match(new RegExp(unitPricePattern, 'i'));
-                    var quantityMatch = currentMatch.match(new RegExp('"quantity":\\s*{\\s*"value":\\s*(\\d+)', 'i'));
-        
-                    serviceResults += '<br>Product/Service ' + (i + 1) + ':<br>';
+
+                    var displayMatch = serviceMatches[i].match(new RegExp(displayPattern, 'i'));
+                    var NphiesMatch = serviceMatches[i].match(new RegExp(NphiesPattern, 'i'));
+                    var ServiceMatch = serviceMatches[i].match(new RegExp(ServicePattern, 'i'));
+                    var unitPriceMatch = serviceMatches[i].match(new RegExp(unitPricePattern, 'i'));
+                    var quantityMatch = serviceMatches[i].match(new RegExp('"quantity":\\s*{\\s*"value":\\s*(\\d+)', 'i'));
+
                     serviceResults += 'Name: ' + (displayMatch ? displayMatch[1] : 'Not found') + '<br>';
                     serviceResults += 'Nphies Code: ' + (NphiesMatch ? copyButton(NphiesMatch[2]) : 'Not found') + '<br>';
                     serviceResults += 'Service Code: ' + (ServiceMatch ? copyButton(ServiceMatch[2]) : 'Not found') + '<br>';
@@ -205,10 +208,9 @@
                     serviceResults += 'Unit Price: ' + (unitPriceMatch ? copyButton(unitPriceMatch[1]) : 'Not found') + '<br><br>';
                 }
             }
-        
+
             document.getElementById('outputBox').innerHTML = previousResults + serviceResults;
         }
-
 
         function copyButton(text) {
             return '<span style="cursor: pointer; text-decoration: underline;" onclick="copyToClipboard(\'' + text + '\')">' + text + '</span>';
