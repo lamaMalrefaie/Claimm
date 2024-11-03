@@ -182,7 +182,7 @@
             var servicePattern = '"productOrService":\\s*{[\\s\\S]+?},[\\s\\S]*?"quantity":\\s*{\\s*"value":\\s*(\\d+)';
             var serviceResults = '';
             var serviceMatches = prettyJsonText.match(new RegExp(servicePattern, 'gi'));
-
+        
             if (serviceMatches) {
                 for (var i = 0; i < serviceMatches.length; i++) {
                     var currentMatch = serviceMatches[i];
@@ -190,13 +190,13 @@
                     var NphiesPattern = '"coding":\\s*\\[\\s*{[\\s\\S]+?"system":\\s*"([^"]+)",\\s*"code":\\s*"([^"]+)"';
                     var ServicePattern = '"coding":\\s*\\[\\s*{[\\s\\S]+?},\\s*{[\\s\\S]+?"system":\\s*"([^"]+)",\\s*"code":\\s*"([^"]+)"';
                     var unitPricePattern = '"unitPrice":\\s*{\\s*"value":\\s*([\\d.]+)';
-
+        
                     var displayMatch = currentMatch.match(new RegExp(displayPattern, 'i'));
                     var NphiesMatch = currentMatch.match(new RegExp(NphiesPattern, 'i'));
                     var ServiceMatch = currentMatch.match(new RegExp(ServicePattern, 'i'));
                     var unitPriceMatch = currentMatch.match(new RegExp(unitPricePattern, 'i'));
                     var quantityMatch = currentMatch.match(new RegExp('"quantity":\\s*{\\s*"value":\\s*(\\d+)', 'i'));
-
+        
                     serviceResults += '<br>Product/Service ' + (i + 1) + ':<br>';
                     serviceResults += 'Name: ' + (displayMatch ? displayMatch[1] : 'Not found') + '<br>';
                     serviceResults += 'Nphies Code: ' + (NphiesMatch ? copyButton(NphiesMatch[2]) : 'Not found') + '<br>';
@@ -205,9 +205,10 @@
                     serviceResults += 'Unit Price: ' + (unitPriceMatch ? copyButton(unitPriceMatch[1]) : 'Not found') + '<br><br>';
                 }
             }
-
+        
             document.getElementById('outputBox').innerHTML = previousResults + serviceResults;
         }
+
 
         function copyButton(text) {
             return '<span style="cursor: pointer; text-decoration: underline;" onclick="copyToClipboard(\'' + text + '\')">' + text + '</span>';
