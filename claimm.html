@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -126,13 +127,12 @@
                 var jsonObj = JSON.parse(inputText);
                 var prettyJson = JSON.stringify(jsonObj, null, 2);
                 document.getElementById('beutiBox').value = prettyJson;
-                
-                let outputResults = '';
-                searchNested(jsonObj, outputResults);
             } catch (e) {
                 document.getElementById('beutiBox').value = 'Invalid JSON: ' + e.message;
                 document.getElementById('outputBox').innerText = '';
+                return;
             }
+            processValues(prettyJson);
         }
 
         function clearContent() {
@@ -141,56 +141,66 @@
             document.getElementById('outputBox').innerText = '';
         }
 
-        function searchNested(obj, outputResults, level = 1) {
-            // Look for specific keys at the current level of the JSON structure
-            if (obj.net && obj.net.value) {
-                outputResults += `<br>Extension ${level}:<br>Net Value: ${copyButton(obj.net.value)}<br>`;
-            }
-            if (obj.extensionTax && obj.extensionTax.valueMoney && obj.extensionTax.valueMoney.value) {
-                outputResults += `Extension Tax: ${copyButton(obj.extensionTax.valueMoney.value)}<br>`;
-            }
-            if (obj.patientInvoice && obj.patientInvoice.value) {
-                outputResults += `Patient Invoice: ${copyButton(obj.patientInvoice.value)}<br>`;
-            }
-            if (obj.patientShare && obj.patientShare.value) {
-                outputResults += `Patient Share: ${copyButton(obj.patientShare.value)}<br>`;
-            }
+        function processValues(prettyJsonText) {
+            let outputResults = '';
 
-            // If there is a `productOrService` object, extract its information
-            if (obj.productOrService) {
-                outputResults += 'Product/Service Information:<br>';
-                processProductOrService(obj.productOrService, outputResults);
-            }
+            // Patterns for Net Value, Extension Tax, Patient Invoice, and Patient Share
+            let netValuePattern = /"net":\s*{\s*"value":\s*([\d.]+)/gi;
+            let extensionTaxPattern = /"url":\s*"[^"]*extension-tax"[\s\S]*?"valueMoney":\s*{\s*"value":\s*([\d.]+)/gi;
+            let patientInvoicePattern = /"patientInvoice":\s*{\s*"value":\s*([\d.]+)/gi;
+            let patientSharePattern = /"patientShare":\s*{\s*"value":\s*([\d.]+)/gi;
 
-            // Recursively search nested arrays and objects
-            for (let key in obj) {
-                if (typeof obj[key] === 'object') {
-                    searchNested(obj[key], outputResults, level + 1);
+            // Function to extract matches
+            function extractMatches(pattern, label) {
+                let match, count = 1;
+                while ((match = pattern.exec(prettyJsonText)) !== null) {
+                    outputResults += `${label} ${count}: ${copyButton(match[1])}<br>`;
+                    count++;
+                }
+                if (count === 1) {
+                    outputResults += `${label}: Not found<br>`;
                 }
             }
 
-            document.getElementById('outputBox').innerHTML = outputResults;
+            // Extract values
+            extractMatches(netValuePattern, 'Net Value');
+            extractMatches(extensionTaxPattern, 'Extension Tax');
+            extractMatches(patientInvoicePattern, 'Patient Invoice');
+            extractMatches(patientSharePattern, 'Patient Share');
+
+            // Process product/service information
+            processProductOrService(prettyJsonText, outputResults);
         }
 
-        function processProductOrService(productObj, outputResults) {
-            // Patterns within each productOrService object
-            if (productObj.display) {
-                outputResults += `Name: ${copyButton(productObj.display)}<br>`;
-            }
-            if (productObj.coding && Array.isArray(productObj.coding)) {
-                if (productObj.coding[0].code) {
-                    outputResults += `Nphies Code: ${copyButton(productObj.coding[0].code)}<br>`;
+        function processProductOrService(prettyJsonText, previousResults) {
+            var servicePattern = '"productOrService":\\s*{[\\s\\S]+?},[\\s\\S]*?"quantity":\\s*{\\s*"value":\\s*(\\d+)';
+            var serviceResults = '';
+            var serviceMatches = prettyJsonText.match(new RegExp(servicePattern, 'gi'));
+
+            if (serviceMatches) {
+                for (var i = 0; i < serviceMatches.length; i++) {
+                    serviceResults += '<br>Product/Service ' + (i + 1) + ':<br>';
+                    
+                    var displayPattern = '"display":\\s*"([^"]+)"';
+                    var NphiesPattern = '"coding":\\s*\\[\\s*{[\\s\\S]+?"system":\\s*"([^"]+)",\\s*"code":\\s*"([^"]+)"';
+                    var ServicePattern = '"coding":\\s*\\[\\s*{[\\s\\S]+?},\\s*{[\\s\\S]+?"system":\\s*"([^"]+)",\\s*"code":\\s*"([^"]+)"';
+                    var unitPricePattern = '"unitPrice":\\s*{\\s*"value":\\s*([\\d.]+)';
+
+                    var displayMatch = serviceMatches[i].match(new RegExp(displayPattern, 'i'));
+                    var NphiesMatch = serviceMatches[i].match(new RegExp(NphiesPattern, 'i'));
+                    var ServiceMatch = serviceMatches[i].match(new RegExp(ServicePattern, 'i'));
+                    var unitPriceMatch = serviceMatches[i].match(new RegExp(unitPricePattern, 'i'));
+                    var quantityMatch = serviceMatches[i].match(new RegExp('"quantity":\\s*{\\s*"value":\\s*(\\d+)', 'i'));
+
+                    serviceResults += 'Name: ' + (displayMatch ? displayMatch[1] : 'Not found') + '<br>';
+                    serviceResults += 'Nphies Code: ' + (NphiesMatch ? copyButton(NphiesMatch[2]) : 'Not found') + '<br>';
+                    serviceResults += 'Service Code: ' + (ServiceMatch ? copyButton(ServiceMatch[2]) : 'Not found') + '<br>';
+                    serviceResults += 'Quantity: ' + (quantityMatch ? quantityMatch[1] : 'Not found') + '<br>';
+                    serviceResults += 'Unit Price: ' + (unitPriceMatch ? copyButton(unitPriceMatch[1]) : 'Not found') + '<br><br>';
                 }
-                if (productObj.coding[1] && productObj.coding[1].code) {
-                    outputResults += `Service Code: ${copyButton(productObj.coding[1].code)}<br>`;
-                }
             }
-            if (productObj.quantity && productObj.quantity.value) {
-                outputResults += `Quantity: ${copyButton(productObj.quantity.value)}<br>`;
-            }
-            if (productObj.unitPrice && productObj.unitPrice.value) {
-                outputResults += `Unit Price: ${copyButton(productObj.unitPrice.value)}<br>`;
-            }
+
+            document.getElementById('outputBox').innerHTML = previousResults + serviceResults;
         }
 
         function copyButton(text) {
