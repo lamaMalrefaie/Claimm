@@ -192,7 +192,7 @@
             var servicePattern = '"productOrService":\\s*{[\\s\\S]+?},[\\s\\S]*?"quantity":\\s*{\\s*"value":\\s*(\\d+)';
             var serviceResults = '';
             var serviceMatches = prettyJsonText.match(new RegExp(servicePattern, 'gi'));
-
+        
             // Patterns for specific fields
             var patientInvoicePattern = '"system":\\s*"[^"]*patientInvoice"\\s*,\\s*"value":\\s*"([^"]+)"';
             var extensionTaxPattern = '"url":\\s*"[^"]*extension-tax"[\\s\\S]*?"valueMoney":\\s*{\\s*"value":\\s*([\\d.]+)';
@@ -201,25 +201,25 @@
             var netValuePattern = '"net":\\s*{\\s*"value":\\s*([\\d.]+)';
             var displayPattern = '"display":\\s*"([^"]+)"';
             var nphiesPattern = '"coding":\\s*\\[\\s*{[\\s\\S]+?"system":\\s*"([^"]+)",\\s*"code":\\s*"([^"]+)"';
-            var servicePattern = '"coding":\\s*\\[\\s*{[\\s\\S]+?},\\s*{[\\s\\S]+?"system":\\s*"([^"]+)",\\s*"code":\\s*"([^"]+)"';
-
+            var serviceCodePattern = '"coding":\\s*\\[\\s*{[\\s\\S]+?},\\s*{[\\s\\S]+?"system":\\s*"([^"]+)",\\s*"code":\\s*"([^"]+)"';
+        
             if (serviceMatches) {
                 for (var i = 0; i < serviceMatches.length; i++) {
                     var currentMatch = serviceMatches[i];
                     
                     // Extract specific values in prioritized order
-                    var patientInvoiceMatch = currentMatch.match(new RegExp(patientInvoicePattern, 'i'));
+                    var patientInvoiceMatch = prettyJsonText.match(new RegExp(patientInvoicePattern, 'i'));
                     var extensionTaxMatch = currentMatch.match(new RegExp(extensionTaxPattern, 'i'));
                     var patientShareMatch = currentMatch.match(new RegExp(patientSharePattern, 'i'));
                     var unitPriceMatch = currentMatch.match(new RegExp(unitPricePattern, 'i'));
                     var netValueMatch = currentMatch.match(new RegExp(netValuePattern, 'i'));
-
+        
                     var displayMatch = currentMatch.match(new RegExp(displayPattern, 'i'));
                     var nphiesMatch = currentMatch.match(new RegExp(nphiesPattern, 'i'));
-                    var serviceMatch = currentMatch.match(new RegExp(servicePattern, 'i'));
+                    var serviceCodeMatch = currentMatch.match(new RegExp(serviceCodePattern, 'i'));
                     var quantityMatch = currentMatch.match(new RegExp('"quantity":\\s*{\\s*"value":\\s*(\\d+)', 'i'));
-                    var servicedDateMatch = currentMatch.match(new RegExp(ServicedDatePattern, 'i'));
-
+                    var servicedDateMatch = currentMatch.match(new RegExp('"servicedDate":\\s*"([^"]+)"', 'i'));
+        
                     serviceResults += '<br>Product/Service: ' + (i + 1) + '<br>';
                     serviceResults += 'Patient Invoice: ' + (patientInvoiceMatch ? copyButton(patientInvoiceMatch[1]) : 'Not found') + '<br>';
                     serviceResults += 'Extension Tax: ' + (extensionTaxMatch ? copyButton(extensionTaxMatch[1]) : 'Not found') + '<br>';
@@ -228,12 +228,12 @@
                     serviceResults += 'Net Value: ' + (netValueMatch ? copyButton(netValueMatch[1]) : 'Not found') + '<br>';
                     serviceResults += 'Name: ' + (displayMatch ? displayMatch[1] : 'Not found') + '<br>';
                     serviceResults += 'Nphies Code: ' + (nphiesMatch ? copyButton(nphiesMatch[2]) : 'Not found') + '<br>';
-                    serviceResults += 'Service Code: ' + (serviceMatch ? copyButton(serviceMatch[2]) : 'Not found') + '<br>';
+                    serviceResults += 'Service Code: ' + (serviceCodeMatch ? copyButton(serviceCodeMatch[2]) : 'Not found') + '<br>';
                     serviceResults += 'Quantity: ' + (quantityMatch ? quantityMatch[1] : 'Not found') + '<br>';
                     serviceResults += 'Serviced Date: ' + (servicedDateMatch ? copyButton(servicedDateMatch[1]) : 'Not found') + '<br><br>';
                 }
             }
-
+        
             document.getElementById('outputBox').innerHTML = previousResults + serviceResults;
         }
 
