@@ -120,6 +120,13 @@
         <div class="clear-box" onclick="clearContent()">Clear</div>
     </div>
     <script>
+        // Global variables to store one-time extracted values
+        let globalPatientInvoice = null;
+        let globalExtensionTax = null;
+        let globalPatientShare = null;
+        let globalUnitPrice = null;
+        let globalNetValue = null;
+
         function processJson() {
             var inputText = document.getElementById('inputBox').value;
             try {
@@ -161,7 +168,7 @@
                     'preAuthRef': '"preAuthRef":\\s*\\[\\s*"([^"]+)"\\s*\\]',
                     'Gender': '"gender":\\s*"([^"]+)"',
                     'Extension Episode': '"url":\\s*"http://nphies.sa/fhir/ksa/nphies-fs/StructureDefinition/extension-episode"[\\s\\S]*?"value":\\s*"([^"]+)"',
-                    'Practitioner License': '"system":\\s*"http://nphies.sa/license/practitioner-license",\\s*"value":\\s*"([^"]+)"',
+                    'Practitioner License': '"system":\\s*"http://nphies.sa/license/practitioner-license",\\s*"value":\\s*"([^"]+)"'
                 };
 
                 var results = '';
@@ -171,6 +178,13 @@
                     var value = match && match[1];
                     results += key + ': ' + (value ? copyButton(value) : 'Not found') + '<br>';
                 }
+
+                // Extract global values for specific fields if available
+                globalPatientInvoice = (prettyJsonText.match(/"system":\s*"[^"]*patientInvoice"[\s\S]*?"value":\s*"([^"]+)"/i) || [])[1];
+                globalExtensionTax = (prettyJsonText.match(/"url":\s*"[^"]*extension-tax"[\s\S]*?"valueMoney":\s*{\s*"value":\s*([^\s]+)}/i) || [])[1];
+                globalPatientShare = (prettyJsonText.match(/"url":\s*"[^"]*extension-patient-share"[\s\S]*?"valueMoney":\s*{\s*"value":\s*([^\s]+)}/i) || [])[1];
+                globalUnitPrice = (prettyJsonText.match(/"unitPrice":\s*{\s*"value":\s*([^\s]+)}/i) || [])[1];
+                globalNetValue = (prettyJsonText.match(/"net":\s*{\s*"value":\s*([^\s]+)}/i) || [])[1];
 
                 document.getElementById('outputBox').innerHTML = results;
                 processProductOrService(prettyJsonText, results);
@@ -188,11 +202,11 @@
                 'Name': '"display":\\s*"([^"]+)"',
                 'Nphies Code': '"coding":\\s*\\[\\s*{[\\s\\S]+?"system":\\s*"([^"]+)",\\s*"code":\\s*"([^"]+)"',
                 'Service Code': '"coding":\\s*\\[\\s*{[\\s\\S]+?},\\s*{[\\s\\S]+?"system":\\s*"([^"]+)",\\s*"code":\\s*"([^"]+)"',
-                'Patient Invoice': '"system":\\s*"[^"]*patientInvoice"\\s*,\\s*"value":\\s*"([^"]+)"',
-                'Extension Tax': '"url":\\s*"[^"]*extension-tax"[\\s\\S]*?"valueMoney":\\s*{\\s*"value":\\s*([\\d.]+)',
-                'Patient Share': '"url":\\s*"[^"]*extension-patient-share"[\\s\\S]*?"valueMoney":\\s*{\\s*"value":\\s*([\\d.]+)',
-                'Unit Price': '"unitPrice":\\s*{\\s*"value":\\s*([\\d.]+)',
-                'Net Value': '"net":\\s*{\\s*"value":\\s*([\\d.]+)',
+                'Patient Invoice': globalPatientInvoice || '"system":\\s*"[^"]*patientInvoice"\\s*,\\s*"value":\\s*"([^"]+)"',
+                'Extension Tax': globalExtensionTax || '"url":\\s*"[^"]*extension-tax"[\\s\\S]*?"valueMoney":\\s*{\\s*"value":\\s*([\\d.]+)',
+                'Patient Share': globalPatientShare || '"url":\\s*"[^"]*extension-patient-share"[\\s\\S]*?"valueMoney":\\s*{\\s*"value":\\s*([\\d.]+)',
+                'Unit Price': globalUnitPrice || '"unitPrice":\\s*{\\s*"value":\\s*([\\d.]+)',
+                'Net Value': globalNetValue || '"net":\\s*{\\s*"value":\\s*([\\d.]+)',
                 'Serviced Date': '"servicedDate":\\s*"([^"]+)"',
                 'Quantity': '"quantity":\\s*{\\s*"value":\\s*(\\d+)'
             };
