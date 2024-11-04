@@ -120,32 +120,18 @@
         <div class="clear-box" onclick="clearContent()">Clear</div>
     </div>
     <script>
-        // Global variables to store one-time extracted values
-        let globalPatientInvoice = null;
-        let globalExtensionTax = null;
-        let globalPatientShare = null;
-        let globalUnitPrice = null;
-        let globalNetValue = null;
-
         function processJson() {
             var inputText = document.getElementById('inputBox').value;
             try {
                 var jsonObj = JSON.parse(inputText);
                 var prettyJson = JSON.stringify(jsonObj, null, 2);
                 document.getElementById('beutiBox').value = prettyJson;
-
-                if (jsonObj.fullUrl && jsonObj.fullUrl.includes("https://Bupa.com.sa/MessageHeader")) {
-                    var match = jsonObj.fullUrl.match(/https:\/\/(\w+)\.com\.sa\/MessageHeader/);
-                    if (match && match[1] != "Bupa") {
-                        alert("Wrong response to Bupa company");
-                    }
-                }
             } catch (e) {
                 document.getElementById('beutiBox').value = 'Invalid JSON: ' + e.message;
                 document.getElementById('outputBox').innerText = '';
                 return;
             }
-            searchJson(prettyJson);
+            searchJson(jsonObj);
         }
 
         function clearContent() {
@@ -154,77 +140,80 @@
             document.getElementById('outputBox').innerText = '';
         }
 
-        function searchJson(prettyJsonText) {
-            try {
-                var jsonObj = JSON.parse(prettyJsonText);
-                var searchPatterns = {
-                    'resourceType': '"eventCoding":\\s*{\\s*"system":\\s*"[^"]*",\\s*"code":\\s*"([^"]+)"',
-                    'Bundle ID': '"Bundle"[\\s\\S]*?"id":\\s*"([^"]+)"',
-                    'Claim Type': '/CodeSystem/claim-type"[\\s\\S]*?"code":\\s*"([^"]+)"',
-                    'Claim Sub-type': '/CodeSystem/claim-subtype"[\\s\\S]*?"code":\\s*"([^"]+)"',
-                    'Member ID': '/memberid"[\\s\\S]*?"value":\\s*"([^"]+)"',
-                    'National or Iqama ID': '(?:nphies\\.sa/identifier/nationalid|sa/identifier/iqama)"[\\s\\S]*?"value":\\s*"([\\d]+)"',
-                    'Organization ID': '.sa/license/provider-license"[\\s\\S]*?"value":\\s*"([^"]+)"',
-                    'preAuthRef': '"preAuthRef":\\s*\\[\\s*"([^"]+)"\\s*\\]',
-                    'Gender': '"gender":\\s*"([^"]+)"',
-                    'Extension Episode': '"url":\\s*"http://nphies.sa/fhir/ksa/nphies-fs/StructureDefinition/extension-episode"[\\s\\S]*?"value":\\s*"([^"]+)"',
-                    'Practitioner License': '"system":\\s*"http://nphies.sa/license/practitioner-license",\\s*"value":\\s*"([^"]+)"'
-                };
-
-                var results = '';
-                for (var key in searchPatterns) {
-                    var regex = new RegExp(searchPatterns[key], 'i');
-                    var match = prettyJsonText.match(regex);
-                    var value = match && match[1];
-                    results += key + ': ' + (value ? copyButton(value) : 'Not found') + '<br>';
-                }
-
-                // Extract global values for specific fields if available
-                globalPatientInvoice = (prettyJsonText.match(/"system":\s*"[^"]*patientInvoice"[\s\S]*?"value":\s*"([^"]+)"/i) || [])[1];
-                globalExtensionTax = (prettyJsonText.match(/"url":\s*"[^"]*extension-tax"[\s\S]*?"valueMoney":\s*{\s*"value":\s*([^\s]+)}/i) || [])[1];
-                globalPatientShare = (prettyJsonText.match(/"url":\s*"[^"]*extension-patient-share"[\s\S]*?"valueMoney":\s*{\s*"value":\s*([^\s]+)}/i) || [])[1];
-                globalUnitPrice = (prettyJsonText.match(/"unitPrice":\s*{\s*"value":\s*([^\s]+)}/i) || [])[1];
-                globalNetValue = (prettyJsonText.match(/"net":\s*{\s*"value":\s*([^\s]+)}/i) || [])[1];
-
-                document.getElementById('outputBox').innerHTML = results;
-                processProductOrService(prettyJsonText, results);
-            } catch (e) {
-                document.getElementById('outputBox').innerText = 'Error parsing JSON: ' + e.message;
-            }
+        function searchJson(jsonObj) {
+            // Extract one-time values
+            var extractionResults = extractOneTimeValues(jsonObj);
+            document.getElementById('outputBox').innerHTML = extractionResults;
+            processProductOrService(jsonObj, extractionResults);
         }
 
-        function processProductOrService(prettyJsonText, previousResults) {
-            var servicePattern = '"productOrService":\\s*{[\\s\\S]+?},[\\s\\S]*?"quantity":\\s*{\\s*"value":\\s*(\\d+)';
-            var serviceResults = '';
-            var serviceMatches = prettyJsonText.match(new RegExp(servicePattern, 'gi'));
+        function extractOneTimeValues(jsonObj) {
+            // Extract one-time values for fields
+            let results = '';
+            let patientInvoice = extractValueFromExtension(jsonObj, 'extension-patientInvoice');
+            let extensionTax = extractValueFromExtension(jsonObj, 'extension-tax');
+            let patientShare = extractValueFromExtension(jsonObj, 'extension-patient-share');
+            let unitPrice = extractValueFromNestedKey(jsonObj, 'unitPrice');
+            let netValue = extractValueFromNestedKey(jsonObj, 'net');
 
-            var extractionPatterns = {
-                'Name': '"display":\\s*"([^"]+)"',
-                'Nphies Code': '"coding":\\s*\\[\\s*{[\\s\\S]+?"system":\\s*"([^"]+)",\\s*"code":\\s*"([^"]+)"',
-                'Service Code': '"coding":\\s*\\[\\s*{[\\s\\S]+?},\\s*{[\\s\\S]+?"system":\\s*"([^"]+)",\\s*"code":\\s*"([^"]+)"',
-                'Patient Invoice': globalPatientInvoice || '"system":\\s*"[^"]*patientInvoice"\\s*,\\s*"value":\\s*"([^"]+)"',
-                'Extension Tax': globalExtensionTax || '"url":\\s*"[^"]*extension-tax"[\\s\\S]*?"valueMoney":\\s*{\\s*"value":\\s*([\\d.]+)',
-                'Patient Share': globalPatientShare || '"url":\\s*"[^"]*extension-patient-share"[\\s\\S]*?"valueMoney":\\s*{\\s*"value":\\s*([\\d.]+)',
-                'Unit Price': globalUnitPrice || '"unitPrice":\\s*{\\s*"value":\\s*([\\d.]+)',
-                'Net Value': globalNetValue || '"net":\\s*{\\s*"value":\\s*([\\d.]+)',
-                'Serviced Date': '"servicedDate":\\s*"([^"]+)"',
-                'Quantity': '"quantity":\\s*{\\s*"value":\\s*(\\d+)'
-            };
+            results += 'Patient Invoice: ' + (patientInvoice ? patientInvoice : 'Not found') + '<br>';
+            results += 'Extension Tax: ' + (extensionTax ? extensionTax : 'Not found') + '<br>';
+            results += 'Patient Share: ' + (patientShare ? patientShare : 'Not found') + '<br>';
+            results += 'Unit Price: ' + (unitPrice ? unitPrice : 'Not found') + '<br>';
+            results += 'Net Value: ' + (netValue ? netValue : 'Not found') + '<br>';
+            
+            return results;
+        }
 
-            if (serviceMatches) {
-                for (var i = 0; i < serviceMatches.length; i++) {
-                    var currentMatch = serviceMatches[i];
-                    serviceResults += '<br>Product/Service ' + (i + 1) + ':<br>';
-
-                    for (var key in extractionPatterns) {
-                        var regex = new RegExp(extractionPatterns[key], 'i');
-                        var match = currentMatch.match(regex);
-                        serviceResults += key + ': ' + (match ? copyButton(match[1]) : 'Not found') + '<br>';
+        function extractValueFromExtension(obj, extensionName) {
+            if (obj.extension && Array.isArray(obj.extension)) {
+                for (let ext of obj.extension) {
+                    if (ext.url && ext.url.includes(extensionName)) {
+                        if (ext.valueMoney) return ext.valueMoney.value;
+                        if (ext.valueIdentifier) return ext.valueIdentifier.value;
                     }
                 }
             }
+            return null;
+        }
 
+        function extractValueFromNestedKey(obj, keyName) {
+            if (obj[keyName] && obj[keyName].value) {
+                return obj[keyName].value;
+            }
+            return null;
+        }
+
+        function processProductOrService(jsonObj, previousResults) {
+            var serviceResults = '';
+            if (jsonObj.item && Array.isArray(jsonObj.item)) {
+                for (let i = 0; i < jsonObj.item.length; i++) {
+                    let item = jsonObj.item[i];
+                    serviceResults += '<br>Product/Service ' + (i + 1) + ':<br>';
+
+                    // Extract patterns specific to each service item
+                    let display = extractPatternFromString(JSON.stringify(item), '"display":\\s*"([^"]+)"');
+                    let nphiesCode = extractPatternFromString(JSON.stringify(item), '"coding":\\s*\\[\\s*{[\\s\\S]+?"system":\\s*"([^"]+)",\\s*"code":\\s*"([^"]+)"');
+                    let serviceCode = extractPatternFromString(JSON.stringify(item), '"coding":\\s*\\[\\s*{[\\s\\S]+?},\\s*{[\\s\\S]+?"system":\\s*"([^"]+)",\\s*"code":\\s*"([^"]+)"');
+                    let extensionTax = extractValueFromExtension(item, 'extension-tax');
+                    let quantity = (item.quantity && item.quantity.value) || 'Not found';
+                    let servicedDate = item.servicedDate || 'Not found';
+
+                    serviceResults += 'Display: ' + (display ? display : 'Not found') + '<br>';
+                    serviceResults += 'Nphies Code: ' + (nphiesCode ? nphiesCode : 'Not found') + '<br>';
+                    serviceResults += 'Service Code: ' + (serviceCode ? serviceCode : 'Not found') + '<br>';
+                    serviceResults += 'Extension Tax: ' + (extensionTax ? extensionTax : 'Not found') + '<br>';
+                    serviceResults += 'Quantity: ' + quantity + '<br>';
+                    serviceResults += 'Serviced Date: ' + servicedDate + '<br>';
+                }
+            }
             document.getElementById('outputBox').innerHTML = previousResults + serviceResults;
+        }
+
+        function extractPatternFromString(inputString, pattern) {
+            var regex = new RegExp(pattern, 'i');
+            var match = inputString.match(regex);
+            return match && match[1] ? match[1] : null;
         }
 
         function copyButton(text) {
