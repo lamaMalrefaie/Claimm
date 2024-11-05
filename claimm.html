@@ -126,19 +126,12 @@
                 var jsonObj = JSON.parse(inputText);
                 var prettyJson = JSON.stringify(jsonObj, null, 2);
                 document.getElementById('beutiBox').value = prettyJson;
-
-                if (jsonObj.fullUrl && jsonObj.fullUrl.includes("https://Bupa.com.sa/MessageHeader")) {
-                    var match = jsonObj.fullUrl.match(/https:\/\/(\w+)\.com\.sa\/MessageHeader/);
-                    if (match && match[1] != "Bupa") {
-                        alert("Wrong response to Bupa company");
-                    }
-                }
             } catch (e) {
                 document.getElementById('beutiBox').value = 'Invalid JSON: ' + e.message;
                 document.getElementById('outputBox').innerText = '';
                 return;
             }
-            searchJson(prettyJson);
+            processProductOrService(prettyJson);
         }
 
         function clearContent() {
@@ -147,73 +140,60 @@
             document.getElementById('outputBox').innerText = '';
         }
 
-        // Patterns for extracting extension fields
-        var patientInvoicePattern = '"url":\\s*"[^"]*extension-patientInvoice"[\\s\\S]*?"valueIdentifier":\\s*{[\\s\\S]*?"value":\\s*"([^"]+)"';
-        var extensionTaxPattern = '"url":\\s*"[^"]*extension-tax"[\\s\\S]*?"valueMoney":\\s*{\\s*"value":\\s*([\\d.]+)';
-        var patientSharePattern = '"url":\\s*"[^"]*extension-patient-share"[\\s\\S]*?"valueMoney":\\s*{\\s*"value":\\s*([\\d.]+)';
-        var payerSharePattern = '"url":\\s*"[^"]*extension-payer-share"[\\s\\S]*?"valueMoney":\\s*{\\s*"value":\\s*([\\d.]+)';
-        var ServicedDatePattern = '"servicedDate":\\s*"([^"]+)"';
-
-        function searchJson(prettyJsonText) {
-            try {
-                var jsonObj = JSON.parse(prettyJsonText);
-                var results = '';
-                var errorMessages = [];
-
-                document.getElementById('outputBox').innerHTML = results;
-                processProductOrService(prettyJsonText, results);
-            } catch (e) {
-                document.getElementById('outputBox').innerText = 'Error parsing JSON: ' + e.message;
-            }
-        }
-
-        function processProductOrService(prettyJsonText, previousResults) {
-            var servicePattern = '"productOrService":\\s*{[\\s\\S]+?},[\\s\\S]*?"quantity":\\s*{\\s*"value":\\s*(\\d+)';
-            var serviceResults = '';
+        function processProductOrService(prettyJsonText) {
+            // Updated pattern to match both extension and productOrService together
+            var servicePattern = '"extension":\\s*\\[[\\s\\S]+?"productOrService":\\s*{[\\s\\S]+?},[\\s\\S]*?"quantity":\\s*{\\s*"value":\\s*(\\d+)';
             var serviceMatches = prettyJsonText.match(new RegExp(servicePattern, 'gi'));
 
-            // Match extensions
-            var patientInvoiceMatch = prettyJsonText.match(new RegExp(patientInvoicePattern, 'i'));
-            var extensionTaxMatch = prettyJsonText.match(new RegExp(extensionTaxPattern, 'i'));
-            var patientShareMatch = prettyJsonText.match(new RegExp(patientSharePattern, 'i'));
-            var payerShareMatch = prettyJsonText.match(new RegExp(payerSharePattern, 'i'));
-
-            // Append extracted information from extensions
-            serviceResults += 'Patient Invoice: ' + (patientInvoiceMatch ? copyButton(patientInvoiceMatch[1]) : 'Not found') + '<br>';
-            serviceResults += 'Extension Tax: ' + (extensionTaxMatch ? copyButton(extensionTaxMatch[1]) : 'Not found') + '<br>';
-            serviceResults += 'Patient Share: ' + (patientShareMatch ? copyButton(patientShareMatch[1]) : 'Not found') + '<br>';
-            serviceResults += 'Payer Share: ' + (payerShareMatch ? copyButton(payerShareMatch[1]) : 'Not found') + '<br><br>';
+            var serviceResults = '';
 
             if (serviceMatches) {
                 for (var i = 0; i < serviceMatches.length; i++) {
                     var currentMatch = serviceMatches[i];
+
+                    // Patterns for each extension within the current product/service
+                    var patientInvoicePattern = '"url":\\s*"[^"]*extension-patientInvoice"[\\s\\S]*?"valueIdentifier":\\s*{[\\s\\S]*?"value":\\s*"([^"]+)"';
+                    var extensionTaxPattern = '"url":\\s*"[^"]*extension-tax"[\\s\\S]*?"valueMoney":\\s*{\\s*"value":\\s*([\\d.]+)';
+                    var patientSharePattern = '"url":\\s*"[^"]*extension-patient-share"[\\s\\S]*?"valueMoney":\\s*{\\s*"value":\\s*([\\d.]+)';
+                    var payerSharePattern = '"url":\\s*"[^"]*extension-payer-share"[\\s\\S]*?"valueMoney":\\s*{\\s*"value":\\s*([\\d.]+)';
+
+                    // Match extension values
+                    var patientInvoiceMatch = currentMatch.match(new RegExp(patientInvoicePattern, 'i'));
+                    var extensionTaxMatch = currentMatch.match(new RegExp(extensionTaxPattern, 'i'));
+                    var patientShareMatch = currentMatch.match(new RegExp(patientSharePattern, 'i'));
+                    var payerShareMatch = currentMatch.match(new RegExp(payerSharePattern, 'i'));
+
+                    // Append extension details
+                    serviceResults += '<br>Patient Invoice: ' + (patientInvoiceMatch ? copyButton(patientInvoiceMatch[1]) : 'Not found') + '<br>';
+                    serviceResults += 'Extension Tax: ' + (extensionTaxMatch ? copyButton(extensionTaxMatch[1]) : 'Not found') + '<br>';
+                    serviceResults += 'Patient Share: ' + (patientShareMatch ? copyButton(patientShareMatch[1]) : 'Not found') + '<br>';
+                    serviceResults += 'Payer Share: ' + (payerShareMatch ? copyButton(payerShareMatch[1]) : 'Not found') + '<br>';
+
+                    // Patterns to extract product/service details
                     var displayPattern = '"display":\\s*"([^"]+)"';
                     var NphiesPattern = '"coding":\\s*\\[\\s*{[\\s\\S]+?"system":\\s*"([^"]+)",\\s*"code":\\s*"([^"]+)"';
                     var ServicePattern = '"coding":\\s*\\[\\s*{[\\s\\S]+?},\\s*{[\\s\\S]+?"system":\\s*"([^"]+)",\\s*"code":\\s*"([^"]+)"';
+                    var quantityPattern = '"quantity":\\s*{\\s*"value":\\s*(\\d+)';
+                    var servicedDatePattern = '"servicedDate":\\s*"([^"]+)"';
 
+                    // Match product/service details
                     var displayMatch = currentMatch.match(new RegExp(displayPattern, 'i'));
                     var NphiesMatch = currentMatch.match(new RegExp(NphiesPattern, 'i'));
                     var ServiceMatch = currentMatch.match(new RegExp(ServicePattern, 'i'));
+                    var quantityMatch = currentMatch.match(new RegExp(quantityPattern, 'i'));
+                    var servicedDateMatch = currentMatch.match(new RegExp(servicedDatePattern, 'i'));
 
-                    var quantityMatch = currentMatch.match(new RegExp('"quantity":\\s*{\\s*"value":\\s*(\\d+)', 'i'));
-                    var ServicedDateMatch1 = currentMatch.match(new RegExp(ServicedDatePattern, 'i'));
-
+                    // Append product/service details
                     serviceResults += '<br>Product/Service :' + (i + 1) + ' <br>';
                     serviceResults += 'Name: ' + (displayMatch ? displayMatch[1] : 'Not found') + '<br>';
                     serviceResults += 'Nphies Code: ' + (NphiesMatch ? copyButton(NphiesMatch[2]) : 'Not found') + '<br>';
                     serviceResults += 'Service Code: ' + (ServiceMatch ? copyButton(ServiceMatch[2]) : 'Not found') + '<br>';
-                    
-                    if (ServicedDateMatch1) {
-                        serviceResults += 'Serviced Date: ' + copyButton(ServicedDateMatch1[1]) + '<br>';
-                    } else {
-                        serviceResults += 'Serviced Date: Not found<br>';
-                    }
-
+                    serviceResults += 'Serviced Date: ' + (servicedDateMatch ? copyButton(servicedDateMatch[1]) : 'Not found') + '<br>';
                     serviceResults += 'Quantity: ' + (quantityMatch ? quantityMatch[1] : 'Not found') + '<br><br>';
                 }
             }
 
-            document.getElementById('outputBox').innerHTML = previousResults + serviceResults;
+            document.getElementById('outputBox').innerHTML = serviceResults;
         }
 
         function copyButton(text) {
