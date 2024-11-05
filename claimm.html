@@ -155,21 +155,19 @@
                     var patientInvoicePattern = '"url":\\s*"[^"]*extension-patientInvoice"[\\s\\S]*?"valueIdentifier":\\s*{[\\s\\S]*?"value":\\s*"([^"]+)"';
                     var extensionTaxPattern = '"url":\\s*"[^"]*extension-tax"[\\s\\S]*?"valueMoney":\\s*{\\s*"value":\\s*([\\d.]+)';
                     var patientSharePattern = '"url":\\s*"[^"]*extension-patient-share"[\\s\\S]*?"valueMoney":\\s*{\\s*"value":\\s*([\\d.]+)';
-                    var payerSharePattern = '"url":\\s*"[^"]*extension-payer-share"[\\s\\S]*?"valueMoney":\\s*{\\s*"value":\\s*([\\d.]+)';
-
                     // Match extension values
                     var patientInvoiceMatch = currentMatch.match(new RegExp(patientInvoicePattern, 'i'));
                     var extensionTaxMatch = currentMatch.match(new RegExp(extensionTaxPattern, 'i'));
                     var patientShareMatch = currentMatch.match(new RegExp(patientSharePattern, 'i'));
-                    var payerShareMatch = currentMatch.match(new RegExp(payerSharePattern, 'i'));
 
                     // Append extension details
+                    serviceResults += '<br>Product/Service :' + (i + 1) + ' <br>';
                     serviceResults += '<br>Patient Invoice: ' + (patientInvoiceMatch ? copyButton(patientInvoiceMatch[1]) : 'Not found') + '<br>';
                     serviceResults += 'Extension Tax: ' + (extensionTaxMatch ? copyButton(extensionTaxMatch[1]) : 'Not found') + '<br>';
                     serviceResults += 'Patient Share: ' + (patientShareMatch ? copyButton(patientShareMatch[1]) : 'Not found') + '<br>';
-                    serviceResults += 'Payer Share: ' + (payerShareMatch ? copyButton(payerShareMatch[1]) : 'Not found') + '<br>';
 
                     // Patterns to extract product/service details
+                    
                     var displayPattern = '"display":\\s*"([^"]+)"';
                     var NphiesPattern = '"coding":\\s*\\[\\s*{[\\s\\S]+?"system":\\s*"([^"]+)",\\s*"code":\\s*"([^"]+)"';
                     var ServicePattern = '"coding":\\s*\\[\\s*{[\\s\\S]+?},\\s*{[\\s\\S]+?"system":\\s*"([^"]+)",\\s*"code":\\s*"([^"]+)"';
@@ -188,7 +186,6 @@
                     var netValueMatch = currentMatch.match(new RegExp(netValuePattern, 'i'));
 
                     // Append product/service details
-                    serviceResults += '<br>Product/Service :' + (i + 1) + ' <br>';
                     serviceResults += 'Name: ' + (displayMatch ? displayMatch[1] : 'Not found') + '<br>';
                     serviceResults += 'Nphies Code: ' + (NphiesMatch ? copyButton(NphiesMatch[2]) : 'Not found') + '<br>';
                     serviceResults += 'Service Code: ' + (ServiceMatch ? copyButton(ServiceMatch[2]) : 'Not found') + '<br>';
@@ -196,6 +193,7 @@
                     serviceResults += 'Quantity: ' + (quantityMatch ? quantityMatch[1] : 'Not found') + '<br>';
                     serviceResults += 'Unit Price: ' + (unitPriceMatch ? copyButton(unitPriceMatch[1]) : 'Not found') + '<br>';
                     serviceResults += 'Net Value: ' + (netValueMatch ? copyButton(netValueMatch[1]) : 'Not found') + '<br><br>';
+                    serviceResults += '------------------------------------------------------------------------------------<br>';
                 }
             }
 
