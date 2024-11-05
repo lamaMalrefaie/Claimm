@@ -306,6 +306,7 @@
                     var patientShareMatch = currentMatch.match(new RegExp(patientSharePattern, 'i'));
                     var payerShareMatch = currentMatch.match(new RegExp(payerSharePattern, 'i'));
 
+                    serviceResults += '-----------------------------------------------------------------------------------<br>';
                     serviceResults += '<br>Product/Service :' + (i + 1) + ' <br>';
                     serviceResults += '<br>Patient Invoice: ' + (patientInvoiceMatch ? copyButton(patientInvoiceMatch[1]) : 'Not found') + '<br>';
                     serviceResults += 'Extension Tax: ' + (extensionTaxMatch ? copyButton(extensionTaxMatch[1]) : 'Not found') + '<br>';
@@ -335,7 +336,6 @@
                     serviceResults += 'Quantity: ' + (quantityMatch ? quantityMatch[1] : 'Not found') + '<br>';
                     serviceResults += 'Unit Price: ' + (unitPriceMatch ? copyButton(unitPriceMatch[1]) : 'Not found') + '<br>';
                     serviceResults += 'Net Value: ' + (netValueMatch ? copyButton(netValueMatch[1]) : 'Not found') + '<br><br>';
-                    serviceResults += '-----------------------------------------------------------------------------------<br>';
                 }
             }
 
