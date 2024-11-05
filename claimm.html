@@ -315,8 +315,9 @@
                     serviceResults += 'Payer Share: ' + (payerShareMatch ? copyButton(payerShareMatch[1]) : 'Not found') + '<br>';
 
                     var displayPattern = '"display":\\s*"([^"]+)"';
-                    var NphiesPattern = '"coding":\\s*\\[\\s*{[\\s\\S]+?"system":\\s*"([^"]+)",\\s*"code":\\s*"([^"]+)"';
-                    var ServicePattern = '"coding":\\s*\\[\\s*{[\\s\\S]+?},\\s*{[\\s\\S]+?"system":\\s*"([^"]+)",\\s*"code":\\s*"([^"]+)"';
+                    var NphiesPattern = '"productOrService":\\s*{[\\s\\S]*?"coding":\\s*\\[[\\s\\S]*?"system":\\s*"[^"]*",\\s*"code":\\s*"([^"]+)"';
+                    var ServicePattern = '"productOrService":\\s*{[\\s\\S]*?"coding":\\s*\\[[\\s\\S]+?},\\s*{[\\s\\S]*?"system":\\s*"[^"]*",\\s*"code":\\s*"([^"]+)"';
+
                     var quantityPattern = '"quantity":\\s*{\\s*"value":\\s*(\\d+)';
                     var servicedDatePattern = '"servicedDate":\\s*"([^"]+)"';
                     var unitPricePattern = '"unitPrice":\\s*{[\\s\\S]*?"value":\\s*([\\d.]+)';
