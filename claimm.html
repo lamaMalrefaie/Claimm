@@ -167,10 +167,9 @@
                     'Timestamp': '"timestamp":\\s*"([^"]+)"',
                     'Claim ID': '"system":\\s*"[^"]*/claim",\\s*"value":\\s*"([^"]+)"',
                     'Practitioner Name': '"system":\\s*"http://nphies.sa/license/practitioner-license"[\\s\\S]*?"name"\\s*:\\s*\\[\\s*{\\s*"text"\\s*:\\s*"([^"]+)"',
-                    'PPatient Name': '"system":\\s*"http://sghj.com/identifier/mrn",\\s*"value":\\s*"([^"]+)"', 
                     'Patient Name': '"name":\\s*\\[[\\s\\S]*?"text":\\s*"([^"]+)"',
-                    'ICD-10 Code (Sequence 1)': '"diagnosisCodeableConcept":\\s*{[\\s\\S]*?"system":\\s*"http://hl7.org/fhir/sid/icd-10-am",[\\s\\S]*?"code":\\s*"([^"]+)"[\\s\\S]*?"sequence":\\s*1',
-                    'Diagnosis Type (Sequence 1)': '"type":\\s*\\[[\\s\\S]*?"system":\\s*"http://nphies.sa/terminology/CodeSystem/diagnosis-type",[\\s\\S]*?"code":\\s*"([^"]+)"[\\s\\S]*?"sequence":\\s*1'
+                    'ICD-10 Code': '"diagnosisCodeableConcept":\\s*{[\\s\\S]*?"system":\\s*"http://hl7.org/fhir/sid/icd-10-am",[\\s\\S]*?"code":\\s*"([^"]+)"[\\s\\S]*?"sequence":\\s*1',
+                    'Diagnosis Type': '"type":\\s*\\[[\\s\\S]*?"system":\\s*"http://nphies.sa/terminology/CodeSystem/diagnosis-type",[\\s\\S]*?"code":\\s*"([^"]+)"[\\s\\S]*?"sequence":\\s*1'
                 };
 
 
@@ -319,7 +318,6 @@
                     serviceResults += '<br>Patient Invoice: ' + (patientInvoiceMatch ? copyButton(patientInvoiceMatch[1]) : 'Not found') + '<br>';
                     serviceResults += 'Extension Tax: ' + (extensionTaxMatch ? copyButton(extensionTaxMatch[1]) : 'Not found') + '<br>';
                     serviceResults += 'Patient Share: ' + (patientShareMatch ? copyButton(patientShareMatch[1]) : 'Not found') + '<br>';
-                    serviceResults += 'Payer Share: ' + (payerShareMatch ? copyButton(payerShareMatch[1]) : 'Not found') + '<br>';
 
                     var displayPattern = '"display":\\s*"([^"]+)"';
                     var nphiesCodePattern = '"productOrService":\\s*{[\\s\\S]*?"coding":\\s*\\[[\\s\\S]*?"code":\\s*"([^"]+)"';
