@@ -306,6 +306,14 @@
                     var patientShareMatch = currentMatch.match(new RegExp(patientSharePattern, 'i'));
                     var payerShareMatch = currentMatch.match(new RegExp(payerSharePattern, 'i'));
 
+
+                    var codePattern = '"productOrService":\\s*{[\\s\\S]*?"coding":\\s*\\[[\\s\\S]*?"code":\\s*"([^"]+)"';
+
+                    var codeMatches = currentMatch.match(new RegExp(codePattern, 'gi'));
+                    var nphiesCode = codeMatches && codeMatches[0] ? codeMatches[0].match(/"code":\s*"([^"]+)"/)[1] : 'Not found';
+                    var serviceCode = codeMatches && codeMatches[1] ? codeMatches[1].match(/"code":\s*"([^"]+)"/)[1] : 'Not found';
+
+
                     serviceResults += '-----------------------------------------------------------------------------------<br>';
                     serviceResults += '<br>Product/Service :' + (i + 1) + ' <br>';
                     serviceResults += '<br>Patient Invoice: ' + (patientInvoiceMatch ? copyButton(patientInvoiceMatch[1]) : 'Not found') + '<br>';
@@ -331,8 +339,8 @@
                     var netValueMatch = currentMatch.match(new RegExp(netValuePattern, 'i'));
 
                     serviceResults += 'Name: ' + (displayMatch ? displayMatch[1] : 'Not found') + '<br>';
-                    serviceResults += 'Nphies Code: ' + (NphiesMatch ? copyButton(NphiesMatch[2]) : 'Not found') + '<br>';
-                    serviceResults += 'Service Code: ' + (ServiceMatch ? copyButton(ServiceMatch[2]) : 'Not found') + '<br>';
+                    serviceResults += 'Nphies Code: ' + (nphiesCode ? copyButton(nphiesCode) : 'Not found') + '<br>';
+                    serviceResults += 'Service Code: ' + (serviceCode ? copyButton(serviceCode) : 'Not found') + '<br>';
                     serviceResults += 'Serviced Date: ' + (servicedDateMatch ? copyButton(servicedDateMatch[1]) : 'Not found') + '<br>';
                     serviceResults += 'Quantity: ' + (quantityMatch ? quantityMatch[1] : 'Not found') + '<br>';
                     serviceResults += 'Unit Price: ' + (unitPriceMatch ? copyButton(unitPriceMatch[1]) : 'Not found') + '<br>';
