@@ -322,8 +322,8 @@
                     serviceResults += 'Payer Share: ' + (payerShareMatch ? copyButton(payerShareMatch[1]) : 'Not found') + '<br>';
 
                     var displayPattern = '"display":\\s*"([^"]+)"';
-                    var NphiesPattern = '"productOrService":\\s*{[\\s\\S]*?"coding":\\s*\\[[\\s\\S]*?"system":\\s*"[^"]*",\\s*"code":\\s*"([^"]+)"';
-                    var ServicePattern = '"productOrService":\\s*{[\\s\\S]*?"coding":\\s*\\[[\\s\\S]+?},\\s*{[\\s\\S]*?"system":\\s*"[^"]*",\\s*"code":\\s*"([^"]+)"';
+                    var nphiesCodePattern = '"productOrService":\\s*{[\\s\\S]*?"coding":\\s*\\[[\\s\\S]*?"code":\\s*"([^"]+)"';
+                    var serviceCodePattern = '"productOrService":\\s*{[\\s\\S]*?"coding":\\s*\\[[\\s\\S]+?},\\s*{[\\s\\S]*?"code":\\s*"([^"]+)"';
 
                     var quantityPattern = '"quantity":\\s*{\\s*"value":\\s*(\\d+)';
                     var servicedDatePattern = '"servicedDate":\\s*"([^"]+)"';
@@ -331,12 +331,17 @@
                     var netValuePattern = '"net":\\s*{[\\s\\S]*?"value":\\s*([\\d.]+)';
 
                     var displayMatch = currentMatch.match(new RegExp(displayPattern, 'i'));
-                    var NphiesMatch = currentMatch.match(new RegExp(NphiesPattern, 'i'));
-                    var ServiceMatch = currentMatch.match(new RegExp(ServicePattern, 'i'));
+                    var nphiesCodeMatch = currentMatch.match(new RegExp(nphiesCodePattern, 'i'));
+                    var serviceCodeMatch = currentMatch.match(new RegExp(serviceCodePattern, 'i'));
+
                     var quantityMatch = currentMatch.match(new RegExp(quantityPattern, 'i'));
                     var servicedDateMatch = currentMatch.match(new RegExp(servicedDatePattern, 'i'));
                     var unitPriceMatch = currentMatch.match(new RegExp(unitPricePattern, 'i'));
                     var netValueMatch = currentMatch.match(new RegExp(netValuePattern, 'i'));
+
+
+                    var nphiesCode = nphiesCodeMatch ? nphiesCodeMatch[1] : 'Not found';
+                    var serviceCode = serviceCodeMatch ? serviceCodeMatch[1] : 'Not found';
 
                     serviceResults += 'Name: ' + (displayMatch ? displayMatch[1] : 'Not found') + '<br>';
                     serviceResults += 'Nphies Code: ' + (nphiesCode ? copyButton(nphiesCode) : 'Not found') + '<br>';
