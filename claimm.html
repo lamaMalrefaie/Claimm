@@ -288,8 +288,10 @@
 
         function processProductOrService(prettyJsonText, previousResults = '') {
             var servicePattern =  '"extension":\\s*\\[[\\s\\S]+?"productOrService":\\s*{[\\s\\S]+?},[\\s\\S]*?"quantity":\\s*{\\s*"value":\\s*(\\d+),[\\s\\S]*?"unitPrice":\\s*{[\\s\\S]*?"value":\\s*([\\d.]+)[\\s\\S]*?"net":\\s*{[\\s\\S]*?"value":\\s*([\\d.]+)';
-            var serviceMatches = prettyJsonText.match(new RegExp(servicePattern, 'gi'));
+            var servicePattern2 = '"productOrService":\\s*{[\\s\\S]+?},[\\s\\S]*?"quantity":\\s*{\\s*"value":\\s*(\\d+),[\\s\\S]*?"unitPrice":\\s*{[\\s\\S]*?"value":\\s*([\\d.]+)[\\s\\S]*?"net":\\s*{[\\s\\S]*?"value":\\s*([\\d.]+)[\\s\\S]*?"servicedDate":\\s*"([^"]+)"[\\s\\S]*?"url":\\s*"[^"]*extension-patientInvoice"[\\s\\S]*?"valueIdentifier":\\s*{[\\s\\S]*?"value":\\s*"([^"]+)"[\\s\\S]*?"url":\\s*"[^"]*extension-tax"[\\s\\S]*?"valueMoney":\\s*{\\s*"value":\\s*([\\d.]+)[\\s\\S]*?"url":\\s*"[^"]*extension-patient-share"[\\s\\S]*?"valueMoney":\\s*{\\s*"value":\\s*([\\d.]+)';
 
+            var serviceMatches = prettyJsonText.match(new RegExp(servicePattern, 'gi'));
+            var serviceMatches2 = prettyJsonText.match(new RegExp(servicePattern2, 'gi'));
             var serviceResults = previousResults;
 
             if (serviceMatches) {
@@ -352,8 +354,68 @@
                     serviceResults += 'Unit Price: ' + (unitPriceMatch ? copyButton(unitPriceMatch[1]) : 'Not found') + '<br>';
                     serviceResults += 'Net Value: ' + (netValueMatch ? copyButton(netValueMatch[1]) : 'Not found') + '<br><br>';
                 }
-            }
+            }else if (serviceMatches2) {
+                for (var i = 0; i < serviceMatches2.length; i++) {
+                    var currentMatch = serviceMatches2[i];
+                    console.log("Processing match with servicePattern2:", currentMatch);
+                    var patientInvoicePattern = '"url":\\s*"[^"]*extension-patientInvoice"[\\s\\S]*?"valueIdentifier":\\s*{[\\s\\S]*?"value":\\s*"([^"]+)"';
+                    var extensionTaxPattern = '"url":\\s*"[^"]*extension-tax"[\\s\\S]*?"valueMoney":\\s*{\\s*"value":\\s*([\\d.]+)';
+                    var patientSharePattern = '"url":\\s*"[^"]*extension-patient-share"[\\s\\S]*?"valueMoney":\\s*{\\s*"value":\\s*([\\d.]+)';
+                    var payerSharePattern = '"url":\\s*"[^"]*extension-payer-share"[\\s\\S]*?"valueMoney":\\s*{\\s*"value":\\s*([\\d.]+)';
 
+                    var patientInvoiceMatch = currentMatch.match(new RegExp(patientInvoicePattern, 'i'));
+                    var extensionTaxMatch = currentMatch.match(new RegExp(extensionTaxPattern, 'i'));
+                    var patientShareMatch = currentMatch.match(new RegExp(patientSharePattern, 'i'));
+                    var payerShareMatch = currentMatch.match(new RegExp(payerSharePattern, 'i'));
+
+
+                    var codePattern = '"productOrService":\\s*{[\\s\\S]*?"coding":\\s*\\[[\\s\\S]*?"code":\\s*"([^"]+)"';
+
+                    var codeMatches = currentMatch.match(new RegExp(codePattern, 'gi'));
+                    var nphiesCode = codeMatches && codeMatches[0] ? codeMatches[0].match(/"code":\s*"([^"]+)"/)[1] : 'Not found';
+                    var serviceCode = codeMatches && codeMatches[1] ? codeMatches[1].match(/"code":\s*"([^"]+)"/)[1] : 'Not found';
+
+
+                    serviceResults += '-----------------------------------------------------------------------------------<br>';
+                    serviceResults += '<br>Product/Service :' + (i + 1) + ' <br>';
+                    serviceResults += '<br>Patient Invoice: ' + (patientInvoiceMatch ? copyButton(patientInvoiceMatch[1]) : 'Not found') + '<br>';
+                    serviceResults += 'Extension Tax: ' + (extensionTaxMatch ? copyButton(extensionTaxMatch[1]) : 'Not found') + '<br>';
+                    serviceResults += 'Patient Share: ' + (patientShareMatch ? copyButton(patientShareMatch[1]) : 'Not found') + '<br>';
+
+                    var displayPattern = '"display":\\s*"([^"]+)"';
+                    var nphiesCodePattern = '"productOrService":\\s*{[\\s\\S]*?"coding":\\s*\\[[\\s\\S]*?"code":\\s*"([^"]+)"';
+                    var serviceCodePattern = '"productOrService":\\s*{[\\s\\S]*?"coding":\\s*\\[[\\s\\S]+?},\\s*{[\\s\\S]*?"code":\\s*"([^"]+)"';
+                    var servicedPeriodStartPattern = '"servicedPeriod":\\s*{[\\s\\S]*?"start":\\s*"([^"]+)"';
+
+                    var quantityPattern = '"quantity":\\s*{\\s*"value":\\s*(\\d+)';
+                    var servicedDatePattern = '"servicedDate":\\s*"([^"]+)"';
+                    var unitPricePattern = '"unitPrice":\\s*{[\\s\\S]*?"value":\\s*([\\d.]+)';
+                    var netValuePattern = '"net":\\s*{[\\s\\S]*?"value":\\s*([\\d.]+)';
+
+                    var displayMatch = currentMatch.match(new RegExp(displayPattern, 'i'));
+                    var nphiesCodeMatch = currentMatch.match(new RegExp(nphiesCodePattern, 'i'));
+                    var serviceCodeMatch = currentMatch.match(new RegExp(serviceCodePattern, 'i'));
+
+                    var quantityMatch = currentMatch.match(new RegExp(quantityPattern, 'i'));
+                    var servicedDateMatch = currentMatch.match(new RegExp(servicedDatePattern, 'i'));
+                    var servicedPeriodStartMatch = currentMatch.match(new RegExp(servicedPeriodStartPattern, 'i'));
+                    var unitPriceMatch = currentMatch.match(new RegExp(unitPricePattern, 'i'));
+                    var netValueMatch = currentMatch.match(new RegExp(netValuePattern, 'i'));
+
+
+                    var nphiesCode = nphiesCodeMatch ? nphiesCodeMatch[1] : 'Not found';
+                    var serviceCode = serviceCodeMatch ? serviceCodeMatch[1] : 'Not found';
+
+                    serviceResults += 'Name: ' + (displayMatch ? displayMatch[1] : 'Not found') + '<br>';
+                    serviceResults += 'Nphies Code: ' + (nphiesCode ? copyButton(nphiesCode) : 'Not found') + '<br>';
+                    serviceResults += 'Service Code: ' + (serviceCode ? copyButton(serviceCode) : 'Not found') + '<br>';
+                    serviceResults += 'Serviced Date: ' + (servicedDateMatch ? copyButton(servicedDateMatch[1]) : 'Not found') + '<br>';
+                    serviceResults += 'Serviced Period Start: ' + (servicedPeriodStartMatch ? copyButton(servicedPeriodStartMatch[1]) : 'Not found') + '<br>';
+                    serviceResults += 'Quantity: ' + (quantityMatch ? quantityMatch[1] : 'Not found') + '<br>';
+                    serviceResults += 'Unit Price: ' + (unitPriceMatch ? copyButton(unitPriceMatch[1]) : 'Not found') + '<br>';
+                    serviceResults += 'Net Value: ' + (netValueMatch ? copyButton(netValueMatch[1]) : 'Not found') + '<br><br>';
+                }
+            }
             document.getElementById('outputBox').innerHTML = serviceResults;
         }
 
