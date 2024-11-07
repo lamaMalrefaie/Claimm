@@ -287,7 +287,8 @@
         }
 
         function processProductOrService(prettyJsonText, previousResults = '') {
-            var servicePattern =  '"extension":\\s*\\[[\\s\\S]+?"productOrService":\\s*{[\\s\\S]+?},[\\s\\S]*?"quantity":\\s*{\\s*"value":\\s*(\\d+),[\\s\\S]*?"unitPrice":\\s*{[\\s\\S]*?"value":\\s*([\\d.]+)[\\s\\S]*?"net":\\s*{[\\s\\S]*?"value":\\s*([\\d.]+)';
+            var servicePattern = '"extension":\\s*\\[[\\s\\S]+?"productOrService":\\s*{[\\s\\S]+?},[\\s\\S]*?"quantity":\\s*{\\s*"value":\\s*(\\d+),[\\s\\S]*?"unitPrice":\\s*{[\\s\\S]*?"value":\\s*([\\d.]+)[\\s\\S]*?"net":\\s*{[\\s\\S]*?"value":\\s*([\\d.]+)' +'|\"productOrService\":\\s*{[\\s\\S]+?},[\\s\\S]*?\"quantity\":\\s*{\\s*\"value\":\\s*(\\d+)";
+
             var serviceMatches = prettyJsonText.match(new RegExp(servicePattern, 'gi'));
 
             var serviceResults = previousResults;
